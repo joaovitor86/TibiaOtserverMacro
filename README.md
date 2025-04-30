@@ -27,3 +27,6 @@ Este é um script desenvolvido em [AutoHotkey v1.1+](https://www.autohotkey.com/
 4. Dê dois cliques no arquivo TibiaMacro.ahk para executar.
 5. Configure de acordo com suas Hotkeys.
 6. Clique em Calibrar Áreas e siga o que pedir na tela.
+
+## Importante
+É importante que você deixe na mesma pasta do macro os arquivos de imagem: haste.png, spell1.png, spell2.png, spell3.png e config.ini para que o macro funcione corretamente, você pode mudar as imagens de spell para as spells que você quer usar, basta printar seu Tibia quando o ícone da spell estiver na barra de coldown.
