@@ -30,3 +30,6 @@ Este é um script desenvolvido em [AutoHotkey v1.1+](https://www.autohotkey.com/
 
 ## Importante
 É importante que você deixe na mesma pasta do macro os arquivos de imagem: haste.png, spell1.png, spell2.png, spell3.png e config.ini para que o macro funcione corretamente, você pode mudar as imagens de spell para as spells que você quer usar, basta printar seu Tibia quando o ícone da spell estiver na barra de coldown.
+![print2](https://github.com/user-attachments/assets/abe4fecc-47ab-40c9-b4d0-fbd408db5384)
+![print1](https://github.com/user-attachments/assets/d1ac0524-4072-4f09-8f43-14b311a83a9a)
+
