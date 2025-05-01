@@ -13,12 +13,13 @@ global configFile := A_ScriptDir "\config.ini"
 global running := false
 
 ; GUI principal
-Gui, +AlwaysOnTop +ToolWindow
+;Gui, +AlwaysOnTop +ToolWindow
 Gui, Color, Red
 Gui Add, CheckBox, vchkAutoHeal gToggleOptions x16 y24 w119 h17 , Auto Cura (HP)
 Gui Add, CheckBox, vchkAutoMana gToggleOptions x16 y48 w121 h17 , Auto Cura (MP)
 Gui Add, CheckBox, vchkAutoHaste gToggleOptions x16 y72 w94 h17 , Auto Haste
 Gui Add, CheckBox, vchkAutoUseSpells gToggleOptions x16 y96 w95 h17 , Auto Spells
+Gui Add, CheckBox, vchkAutoUseUtito gToggleOptions x16 y120 w95 h17 , Auto Use Utito
 Gui Add, Text, x160 y24 w130 h17 +Right 0x50000002, Tecla Cura 50 HP:
 Gui Add, Text, x160 y56 w130 h17 +Right 0x50000002, Tecla Cura 80 HP:
 Gui Add, Text, x160 y88 w130 h17 +Right 0x50000002, Tecla Cura 90 HP:
@@ -29,11 +30,12 @@ Gui Add, Text, x160 y216 w130 h17 +Right 0x50000002, Tecla de Haste:
 Gui Add, Text, x424 y24 w130 h17 +Right 0x50000002, Atalho Magia 1:
 Gui Add, Text, x424 y56 w130 h17 +Right 0x50000002, Atalho Magia 2:
 Gui Add, Text, x424 y88 w130 h17 +Right 0x50000002, Atalho Magia 3:
+Gui Add, Text, x424 y120 w130 h17 +Right 0x50000002, Tecla Utito:
 Gui Add, Button, gStartMacro x624 y256 w100 h29 0x50012000, Iniciar
 Gui Add, Button, gStopMacro x520 y256 w100 h29 0x50012000, Parar
 Gui Add, Button, gOpenCalibration x152 y256 w130 h29 0x50012000, Calibrar Áreas
-Gui Add, GroupBox, x8 y0 w138 h122, GroupBox
-Gui Add, GroupBox, x152 y0 w568 h246, GroupBox
+Gui Add, GroupBox, x8 y0 w138 h150, Ativar/Desativar
+Gui Add, GroupBox, x152 y0 w568 h246, Teclas
 Gui Add, Hotkey, vkeyHP50 x296 y24 w120 h21
 Gui Add, Hotkey, vkeyHP80 x296 y56 w120 h21
 Gui Add, Hotkey, vkeyHP90 x296 y88 w120 h21
@@ -44,13 +46,14 @@ Gui Add, Hotkey, vkeyHaste x296 y216 w120 h21
 Gui Add, Hotkey, vkeyMagicHotkey1 x560 y24 w120 h21
 Gui Add, Hotkey, vkeyMagicHotkey2 x560 y56 w120 h21
 Gui Add, Hotkey, vkeyMagicHotkey3 x560 y88 w120 h21
+Gui Add, Hotkey, vkeyUtito x560 y120 w120 h21
 
 Gui Show, w727 h293, Macro Tibia Inteligente 2.0
 LoadSettings()
 return
 
 ; verifica se as imagens estão na mesma pasta
-images := ["haste.png", "spell1.png", "spell2.png", "spell3.png"]
+images := ["haste.png", "spell1.png", "spell2.png", "spell3.png", "utito.png"]
 for _, file in images {
     if !FileExist(file) {
         MsgBox, 16, Erro, Arquivo de imagem "%file%" não encontrado na pasta do script. O script será encerrado.
@@ -120,6 +123,13 @@ StopMacro:
     SaveSettings()
     running := false
     SetTimer, MacroLoop, Off
+	; Ativa a janela do client.exe
+    ; Aguarda um momento para garantir que o client.exe foi iniciado corretamente
+    Process, Exist, client.exe
+    if (ErrorLevel)  ; Se o processo client.exe foi encontrado
+    {
+        WinActivate, ahk_pid %ErrorLevel%  ; Foca a janela do client.exe
+    }
 return
 
 MacroLoop:
@@ -130,6 +140,7 @@ MacroLoop:
     GuiControlGet, chkAutoMana,, chkAutoMana
     GuiControlGet, chkAutoHaste,, chkAutoHaste
 	GuiControlGet, chkAutoUseSpells,, chkAutoUseSpells
+	GuiControlGet, chkAutoUseUtito,, chkAutoUseUtito
 
     if (chkAutoHeal)
         CheckHP()
@@ -142,6 +153,8 @@ MacroLoop:
 		CheckSpell2()
 		CheckSpell3()
 	}
+	if(chkAutoUseUtito)
+		CheckUtito()
 return
 
 CheckHP() {
@@ -162,7 +175,7 @@ CheckHPPoint(section, key) {
     PixelGetColor, currentColor, x, y, RGB
     if (currentColor != expectedColor) {
         SendInput, {%key%}
-		Sleep, 25
+		RandSleep(25,75)
     }
 }
 
@@ -188,7 +201,7 @@ CheckHaste() {
         return  ; Haste ativo
     } else {
         SendInput, {%keyHaste%}
-		Sleep, 25
+		RandSleep(25,75)
     }
 }
 
@@ -204,7 +217,7 @@ CheckSpell1() {
         return  ; 
     } else {
         SendInput, {%keyMagicHotkey1%}
-		Sleep, 25
+		RandSleep(25,75)
     }
 }
 
@@ -220,7 +233,7 @@ CheckSpell2() {
         return  ; 
     } else {
         SendInput, {%keyMagicHotkey2%}
-		Sleep, 25
+		RandSleep(25,75)
     }
 }
 
@@ -236,7 +249,23 @@ CheckSpell3() {
         return  ; 
     } else {
         SendInput, {%keyMagicHotkey3%}
-		Sleep, 25
+		RandSleep(25,75)
+    }
+}
+
+CheckUtito() {
+    IniRead, x1, %configFile%, SpellIcons, X1
+    IniRead, y1, %configFile%, SpellIcons, Y1
+    IniRead, x2, %configFile%, SpellIcons, X2
+    IniRead, y2, %configFile%, SpellIcons, Y2
+    GuiControlGet, keyUtito,, keyUtito
+
+    ImageSearch, foundX, foundY, x1, y1, x2, y2, *50 utito.png
+    if (ErrorLevel = 0) {
+        return  ; 
+    } else {
+        SendInput, {%keyUtito%}
+		RandSleep(9999,10100)
     }
 }
 
@@ -259,7 +288,7 @@ CheckMPPoint(section, key) {
     PixelGetColor, currentColor, x, y, RGB
     if (currentColor != expectedColor) {
         SendInput, {%key%}
-		Sleep, 25
+		RandSleep(25,75)
     }
 }
 
@@ -289,12 +318,18 @@ TryFindImage(imagePath, x1, y1, x2, y2) {
     return (ErrorLevel = 0)
 }
 
+RandSleep(x, y) {
+	Random, rand, %x%, %y%
+	Sleep %rand%
+}
+
 LoadSettings() {
     global
     IniRead, chkAutoHeal, %configFile%, Settings, AutoHeal, 0
     IniRead, chkAutoMana, %configFile%, Settings, AutoMana, 0
     IniRead, chkAutoHaste, %configFile%, Settings, AutoHaste, 0
 	IniRead, chkAutoUseSpells, %configFile%, Settings, AutoSpells, 0
+	IniRead, vchkAutoUseUtito, %configFile%, Settings, AutoUseUtito, 0
 
     IniRead, keyHP50, %configFile%, Keys, HP50, 1
     IniRead, keyHP80, %configFile%, Keys, HP80, F1
@@ -307,6 +342,8 @@ LoadSettings() {
 	IniRead, keyMagicHotkey1, %configFile%, Keys, MagicHotkey1, 7
 	IniRead, keyMagicHotkey2, %configFile%, Keys, MagicHotkey2, 8
 	IniRead, keyMagicHotkey3, %configFile%, Keys, MagicHotkey3, 9
+	
+	IniRead, keyUtito, %configFile%, Keys, Utito, F1
 
     GuiControl,, chkAutoHeal, %chkAutoHeal%
     GuiControl,, chkAutoMana, %chkAutoMana%
@@ -324,6 +361,8 @@ LoadSettings() {
 	GuiControl,, keyMagicHotkey1, %keyMagicHotkey1%
 	GuiControl,, keyMagicHotkey2, %keyMagicHotkey2%
 	GuiControl,, keyMagicHotkey3, %keyMagicHotkey3%
+	
+	GuiControl,, keyUtito, %keyUtito%
 }
 
 SaveSettings() {
@@ -332,11 +371,13 @@ SaveSettings() {
     GuiControlGet, chkAutoMana,, chkAutoMana
     GuiControlGet, chkAutoHaste,, chkAutoHaste
     GuiControlGet, chkAutoUseSpells,, chkAutoUseSpells
+	GuiControlGet, chkAutoUseUtito,, chkAutoUseUtito
 
     IniWrite, %chkAutoHeal%, %configFile%, Settings, AutoHeal
     IniWrite, %chkAutoMana%, %configFile%, Settings, AutoMana
     IniWrite, %chkAutoHaste%, %configFile%, Settings, AutoHaste
     IniWrite, %chkAutoUseSpells%, %configFile%, Settings, AutoSpells
+	IniWrite, %chkAutoUseUtito%, %configFile%, Settings, AutoUseUtito
 
     GuiControlGet, keyHP50,, keyHP50
     GuiControlGet, keyHP80,, keyHP80
@@ -349,6 +390,8 @@ SaveSettings() {
 	GuiControlGet, keyMagicHotkey1,, keyMagicHotkey1
 	GuiControlGet, keyMagicHotkey2,, keyMagicHotkey2
 	GuiControlGet, keyMagicHotkey3,, keyMagicHotkey3
+	
+	GuiControlGet, keyUtito,, %keyUtito%
 
     IniWrite, %keyHP50%, %configFile%, Keys, HP50
     IniWrite, %keyHP80%, %configFile%, Keys, HP80
@@ -361,6 +404,8 @@ SaveSettings() {
     IniWrite, %keyMagicHotkey1%, %configFile%, Keys, MagicHotkey1
 	IniWrite, %keyMagicHotkey2%, %configFile%, Keys, MagicHotkey2
 	IniWrite, %keyMagicHotkey3%, %configFile%, Keys, MagicHotkey3
+	
+	IniWrite, %keyUtito%, %configFile%, Keys, Utito
 }
 
 GuiClose:
