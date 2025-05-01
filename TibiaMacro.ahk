@@ -107,6 +107,23 @@ StartMacro:
     SaveSettings()
     running := true
     SetTimer, MacroLoop, 100
+	if (chkAutoHeal) {
+		SetTimer, CheckHP, 100
+	}
+	if (chkAutoMana) {
+		SetTimer, CheckMP, 100
+	}
+	if (chkAutoHaste) {
+		SetTimer, CheckHaste, 250
+	}
+	if (chkAutoUseSpells) {
+		SetTimer, CheckSpell1, 250
+		SetTimer, CheckSpell2, 250
+		SetTimer, CheckSpell3, 250
+	}
+	if (chkAutoUseUtito) {
+		SetTimer, CheckUtito, 10000
+	}
 	
 	; Ativa a janela do client.exe
     ; Aguarda um momento para garantir que o client.exe foi iniciado corretamente
@@ -123,6 +140,14 @@ StopMacro:
     SaveSettings()
     running := false
     SetTimer, MacroLoop, Off
+	SetTimer, CheckHP, Off
+	SetTimer, CheckMP, Off
+	SetTimer, CheckHaste, Off
+	SetTimer, CheckSpell1, Off
+	SetTimer, CheckSpell2, Off
+	SetTimer, CheckSpell3, Off
+	SetTimer, CheckUtito, Off
+	
 	; Ativa a janela do client.exe
     ; Aguarda um momento para garantir que o client.exe foi iniciado corretamente
     Process, Exist, client.exe
@@ -141,20 +166,6 @@ MacroLoop:
     GuiControlGet, chkAutoHaste,, chkAutoHaste
 	GuiControlGet, chkAutoUseSpells,, chkAutoUseSpells
 	GuiControlGet, chkAutoUseUtito,, chkAutoUseUtito
-
-    if (chkAutoHeal)
-        CheckHP()
-    if (chkAutoMana)
-        CheckMP()
-    if (chkAutoHaste)
-        CheckHaste()
-	if (chkAutoUseSpells) {
-		CheckSpell1()
-		CheckSpell2()
-		CheckSpell3()
-	}
-	if(chkAutoUseUtito)
-		CheckUtito()
 return
 
 CheckHP() {
@@ -265,7 +276,6 @@ CheckUtito() {
         return  ; 
     } else {
         SendInput, {%keyUtito%}
-		RandSleep(9999,10100)
     }
 }
 
@@ -329,7 +339,7 @@ LoadSettings() {
     IniRead, chkAutoMana, %configFile%, Settings, AutoMana, 0
     IniRead, chkAutoHaste, %configFile%, Settings, AutoHaste, 0
 	IniRead, chkAutoUseSpells, %configFile%, Settings, AutoSpells, 0
-	IniRead, vchkAutoUseUtito, %configFile%, Settings, AutoUseUtito, 0
+	IniRead, chkAutoUseUtito, %configFile%, Settings, AutoUseUtito, 0
 
     IniRead, keyHP50, %configFile%, Keys, HP50, 1
     IniRead, keyHP80, %configFile%, Keys, HP80, F1
@@ -349,6 +359,7 @@ LoadSettings() {
     GuiControl,, chkAutoMana, %chkAutoMana%
     GuiControl,, chkAutoHaste, %chkAutoHaste%
 	GuiControl,, chkAutoUseSpells, %chkAutoUseSpells%
+	GuiControl,, chkAutoUseUtito, %chkAutoUseUtito%
 
     GuiControl,, keyHP50, %keyHP50%
     GuiControl,, keyHP80, %keyHP80%
@@ -391,7 +402,7 @@ SaveSettings() {
 	GuiControlGet, keyMagicHotkey2,, keyMagicHotkey2
 	GuiControlGet, keyMagicHotkey3,, keyMagicHotkey3
 	
-	GuiControlGet, keyUtito,, %keyUtito%
+	GuiControlGet, keyUtito,, keyUtito
 
     IniWrite, %keyHP50%, %configFile%, Keys, HP50
     IniWrite, %keyHP80%, %configFile%, Keys, HP80
