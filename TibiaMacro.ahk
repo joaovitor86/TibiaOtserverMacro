@@ -11,15 +11,18 @@ FileEncoding, UTF-8
 ; Variáveis globais
 global configFile := A_ScriptDir "\config.ini"
 global running := false
+global BattleListChanged := false
 
 ; GUI principal
 ;Gui, +AlwaysOnTop +ToolWindow
+Gui -Theme
 Gui, Color, Red
+Gui Font, s10, Arial
 Gui Add, CheckBox, vchkAutoHeal gToggleOptions x16 y24 w119 h17 , Auto Cura (HP)
 Gui Add, CheckBox, vchkAutoMana gToggleOptions x16 y48 w121 h17 , Auto Cura (MP)
 Gui Add, CheckBox, vchkAutoHaste gToggleOptions x16 y72 w94 h17 , Auto Haste
 Gui Add, CheckBox, vchkAutoUseSpells gToggleOptions x16 y96 w95 h17 , Auto Spells
-Gui Add, CheckBox, vchkAutoUseUtito gToggleOptions x16 y120 w95 h17 , Auto Use Utito
+Gui Add, CheckBox, vchkAutoUseUtito gToggleOptions x16 y120 w119 h17 , Auto Use Utito
 Gui Add, Text, x160 y24 w130 h17 +Right 0x50000002, Tecla Cura 50 HP:
 Gui Add, Text, x160 y56 w130 h17 +Right 0x50000002, Tecla Cura 80 HP:
 Gui Add, Text, x160 y88 w130 h17 +Right 0x50000002, Tecla Cura 90 HP:
@@ -99,6 +102,8 @@ OpenCalibration:
     CalibrateArea("StatusIcons")
 	MsgBox, Agora vamos calibrar a área dos ícones das magias.
     CalibrateArea("SpellIcons")
+    MsgBox, Agora vamos valibrar a posição da Battle List
+    CalibrateArea("BattleList")
 return
 
 StartMacro:
@@ -107,6 +112,7 @@ StartMacro:
     SaveSettings()
     running := true
     SetTimer, MacroLoop, 100
+    SetTimer, CheckBattleList, 100
 	if (chkAutoHeal) {
 		SetTimer, CheckHP, 100
 	}
@@ -116,11 +122,13 @@ StartMacro:
 	if (chkAutoHaste) {
 		SetTimer, CheckHaste, 250
 	}
-	if (chkAutoUseSpells) {
-		SetTimer, CheckSpell1, 250
-		SetTimer, CheckSpell2, 250
-		SetTimer, CheckSpell3, 250
-	}
+    if (!BattleListChanged) {
+        if (chkAutoUseSpells) {
+            SetTimer, CheckSpell1, 250
+            SetTimer, CheckSpell2, 250
+            SetTimer, CheckSpell3, 250
+        }
+    }
 	if (chkAutoUseUtito) {
 		SetTimer, CheckUtito, 10000
 	}
@@ -139,6 +147,7 @@ StopMacro:
     Gui, Show,, Macro Desativado
     SaveSettings()
     running := false
+    SetTimer, CheckBattleList, Off
     SetTimer, MacroLoop, Off
 	SetTimer, CheckHP, Off
 	SetTimer, CheckMP, Off
@@ -167,6 +176,35 @@ MacroLoop:
 	GuiControlGet, chkAutoUseSpells,, chkAutoUseSpells
 	GuiControlGet, chkAutoUseUtito,, chkAutoUseUtito
 return
+
+;=====================================================================
+; Funções do macro
+;=====================================================================
+
+; Função para verificar se a BattleList está variando (com monstros)
+CheckBattleList() {
+    global
+
+    ; Lê as coordenadas da área da BattleList
+    IniRead, BattleListX1, %configFile%, BattleList, X1
+    IniRead, BattleListY1, %configFile%, BattleList, Y1
+    IniRead, BattleListX2, %configFile%, BattleList, X2
+    IniRead, BattleListY2, %configFile%, BattleList, Y2
+
+    ; Procura a imagem bl.png na área da BattleList
+    ImageSearch, foundX, foundY, %BattleListX1%, %BattleListY1%, %BattleListX2%, %BattleListY2%, *50 bl.png
+
+    ; Se a imagem **não for encontrada**, a BattleList mudou (possivelmente com monstros)
+    if (ErrorLevel != 0) {
+        if (!BattleListChanged) {
+            BattleListChanged := true
+        }
+    } else {
+        if (BattleListChanged) {
+            BattleListChanged := false
+        }
+    }
+}
 
 CheckHP() {
     GuiControlGet, keyHP50,, keyHP50
@@ -217,6 +255,10 @@ CheckHaste() {
 }
 
 CheckSpell1() {
+    global
+    if (!chkAutoUseSpells || !BattleListChanged)
+        return
+
     IniRead, x1, %configFile%, SpellIcons, X1
     IniRead, y1, %configFile%, SpellIcons, Y1
     IniRead, x2, %configFile%, SpellIcons, X2
@@ -233,6 +275,10 @@ CheckSpell1() {
 }
 
 CheckSpell2() {
+    global
+    if (!chkAutoUseSpells || !BattleListChanged)
+        return
+
     IniRead, x1, %configFile%, SpellIcons, X1
     IniRead, y1, %configFile%, SpellIcons, Y1
     IniRead, x2, %configFile%, SpellIcons, X2
@@ -249,6 +295,10 @@ CheckSpell2() {
 }
 
 CheckSpell3() {
+    global
+    if (!chkAutoUseSpells || !BattleListChanged)
+        return
+    
     IniRead, x1, %configFile%, SpellIcons, X1
     IniRead, y1, %configFile%, SpellIcons, Y1
     IniRead, x2, %configFile%, SpellIcons, X2
@@ -278,6 +328,10 @@ CheckUtito() {
         SendInput, {%keyUtito%}
     }
 }
+
+;=====================================================================
+; Funções de auxílio do macro (Não mexer)
+;=====================================================================
 
 CalibratePoint(section) {
     MsgBox, Clique no ponto de %section%.
@@ -333,6 +387,10 @@ RandSleep(x, y) {
 	Sleep %rand%
 }
 
+;=====================================================================
+; Carrega as configurações do arquivo config.ini
+;=====================================================================
+
 LoadSettings() {
     global
     IniRead, chkAutoHeal, %configFile%, Settings, AutoHeal, 0
@@ -375,6 +433,10 @@ LoadSettings() {
 	
 	GuiControl,, keyUtito, %keyUtito%
 }
+
+;=====================================================================
+; Salva as configurações no arquivo config.ini
+;=====================================================================
 
 SaveSettings() {
 	global
