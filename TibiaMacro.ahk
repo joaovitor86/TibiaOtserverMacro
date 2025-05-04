@@ -122,13 +122,11 @@ StartMacro:
 	if (chkAutoHaste) {
 		SetTimer, CheckHaste, 250
 	}
-    if (!BattleListChanged) {
-        if (chkAutoUseSpells) {
-            SetTimer, CheckSpell1, 250
-            SetTimer, CheckSpell2, 250
-            SetTimer, CheckSpell3, 250
-        }
-    }
+    if (chkAutoUseSpells) {
+		SetTimer, CheckSpell1, 250
+		SetTimer, CheckSpell2, 250
+		SetTimer, CheckSpell3, 250
+	}
 	if (chkAutoUseUtito) {
 		SetTimer, CheckUtito, 10000
 	}
@@ -181,30 +179,33 @@ return
 ; Funções do macro
 ;=====================================================================
 
-; Função para verificar se a BattleList está variando (com monstros)
+; Função refatorada para verificar se há variação na BattleList usando imagem enviada
 CheckBattleList() {
-    global
+    ; Caminho para a imagem da battle list vazia
+    emptyBL := "bl.png"  ; salve esse arquivo na mesma pasta do script
 
-    ; Lê as coordenadas da área da BattleList
-    IniRead, BattleListX1, %configFile%, BattleList, X1
-    IniRead, BattleListY1, %configFile%, BattleList, Y1
-    IniRead, BattleListX2, %configFile%, BattleList, X2
-    IniRead, BattleListY2, %configFile%, BattleList, Y2
+    ; Coordenadas da Battle List (ajuste conforme necessário)
+    IniRead, x1, %configFile%, BattleList, X1
+    IniRead, y1, %configFile%, BattleList, Y1
+    IniRead, x2, %configFile%, BattleList, X2
+    IniRead, y2, %configFile%, BattleList, Y2
 
-    ; Procura a imagem bl.png na área da BattleList
-    ImageSearch, foundX, foundY, %BattleListX1%, %BattleListY1%, %BattleListX2%, %BattleListY2%, *50 bl.png
-
-    ; Se a imagem **não for encontrada**, a BattleList mudou (possivelmente com monstros)
-    if (ErrorLevel != 0) {
-        if (!BattleListChanged) {
-            BattleListChanged := true
-        }
+    ; Faz a busca da imagem da Battle List vazia
+    ImageSearch, foundX, foundY, x1, y1, x2, y2, *50 %emptyBL%
+    
+    if (ErrorLevel = 0) {
+        ; A imagem da Battle List vazia foi encontrada — está tudo limpo
+		BattleListChanged := false
+        return false
     } else {
-        if (BattleListChanged) {
-            BattleListChanged := false
-        }
+        ; A imagem vazia NÃO foi encontrada — há algo diferente (provavelmente monstros)
+        ; Chamar sua função de ataque aqui, por exemplo:
+        BattleListChanged := true
+        return true
     }
 }
+
+
 
 CheckHP() {
     GuiControlGet, keyHP50,, keyHP50
